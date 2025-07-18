@@ -9,6 +9,7 @@ const registrationRoute = require("./routes/registration.route");
 const adminRoute = require("./routes/admin.route.js");
 const bcsQuestionsRoute = require("./routes/bcsquestions.route.js");
 const hscQuestionsRoute = require("./routes/hscquestions.route.js");
+const liveExamRoutes = require("./routes/liveExam");
 
 // Load environment variables from .env file
 dotenv.config();
@@ -61,6 +62,9 @@ app.use("/admin", adminRoute);
 app.use("/bcs-questions", bcsQuestionsRoute);
 // Fetch the HSC exam questions
 app.use("/hsc-questions", hscQuestionsRoute);
+
+//Live Exam Route
+app.use("/liveExam", liveExamRoutes);
 
 // Save BCS questions
 app.post("/api/questions", async (req, res) => {
