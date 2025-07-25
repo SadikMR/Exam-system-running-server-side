@@ -2,13 +2,33 @@
 
 const express = require("express");
 const { createLiveExam } = require("../controller/createLiveExam");
+const {
+  submitLiveExam,
+  getSubmission,
+  getUserSubmissions,
+  getExamSubmissions,
+} = require("../controller/liveSubmit.controller");
+
+const {
+  fetchActiveLiveExams,
+  fetchOngoingLiveExams,
+  fetchUpcomingLiveExams,
+  fetchLiveExams,
+  fetchLiveExamById,
+} = require("../controller/liveExamController/fetchLiveExam");
 
 const router = express.Router();
 
-// POST /liveExam/Create
+// POST routes
 router.post("/create", createLiveExam);
+router.post("/submit", submitLiveExam);
 
-// New mock data route
+// GET routes for submissions
+router.get("/submission/:submissionId", getSubmission);
+router.get("/user/:userId/submissions", getUserSubmissions);
+router.get("/exam/:examId/submissions", getExamSubmissions);
+
+// Mock data route
 router.get("/mock", (req, res) => {
   try {
     const { mockApiResponse } = require("../data/mockLiveExams");
@@ -22,5 +42,13 @@ router.get("/mock", (req, res) => {
     });
   }
 });
+
+// ⚠️ IMPORTANT: ALL specific routes MUST come BEFORE parameterized routes
+router.get("/active", fetchActiveLiveExams);
+router.get("/ongoing", fetchOngoingLiveExams);
+router.get("/upcoming", fetchUpcomingLiveExams);
+
+// ✅ General route should come BEFORE parameterized route
+router.get("/", fetchLiveExams);
 
 module.exports = router;
