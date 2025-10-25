@@ -1,37 +1,23 @@
 const express = require("express");
-const {
-  getQuestions,
-  getBcsQuestionsBySubjectWise,
-  SaveBCSOthersQuestions,
-  getBCSOthersQuestions,
-} = require("../controller/bcsquestions.controller.js");
-const {
-  saveExamResultHistory,
-  getExamResultHistory,
-  saveSubjectWiseResultHistory,
-  getSubjectWiseResultHistory,
-} = require("../controller/bcsHistory.controller.js");
-
 const router = express.Router();
+const bcsCtrl = require("../controller/bcsquestions.controller");
 
-//  All Bcs questions exam
-router.get("/get-questions/:year", getQuestions);
-// Subject wise bcs questions exam
+// Create new BCS exam
+router.post("/create", bcsCtrl.createBCSExam);
+
+//checking duplicate
+router.get("/check-duplicate", bcsCtrl.checkDuplicate);
+
+// Get all BCS exams
+router.get("/all", bcsCtrl.getAllBCSExams);
+
+// Get BCS exam by year
+router.get("/:year", bcsCtrl.getBCSExamByYear);
+
+// Get random BCS questions by subject
 router.get(
-  "/get-questions/:subject/:totalQuestions",
-  getBcsQuestionsBySubjectWise
+  "/subject/:subjectName/:limit?",
+  bcsCtrl.getRandomBCSQuestionsBySubject
 );
-
-// All Questions History
-router.post("/save-result", saveExamResultHistory);
-router.get("/get-result-history", getExamResultHistory);
-
-// Subject-Wise-Exam History
-router.post("/save-subject-wise-history", saveSubjectWiseResultHistory);
-router.get("/get-subject-wise-history", getSubjectWiseResultHistory);
-
-//others questions
-router.post("/saveOthersQuestions", SaveBCSOthersQuestions);
-router.get("/getOthersQuestions", getBCSOthersQuestions);
 
 module.exports = router;

@@ -1,5 +1,3 @@
-// routes/liveExam.js
-
 const express = require("express");
 const { createLiveExam } = require("../controller/createLiveExam");
 const {
@@ -43,12 +41,10 @@ router.get("/mock", (req, res) => {
   }
 });
 
-// ⚠️ IMPORTANT: ALL specific routes MUST come BEFORE parameterized routes
 router.get("/active", fetchActiveLiveExams);
 router.get("/ongoing", fetchOngoingLiveExams);
 router.get("/upcoming", fetchUpcomingLiveExams);
 
-// ✅ General route should come BEFORE parameterized route
 router.get("/", fetchLiveExams);
 
 module.exports = router;

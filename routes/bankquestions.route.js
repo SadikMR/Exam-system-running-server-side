@@ -1,0 +1,23 @@
+const express = require("express");
+const router = express.Router();
+const bankExamController = require("../controller/bankquestions.controller");
+
+// ✅ Create a new Bank Exam
+router.post("/create", bankExamController.createBankExam);
+
+//checking duplicate
+router.get("/check-duplicate", bankExamController.checkDuplicate);
+
+// ✅ Get all Bank Exams
+router.get("/", bankExamController.getAllBankExams);
+
+// ✅ Get a single Bank Exam by ID
+router.get("/:id", bankExamController.getBankExamById);
+
+// ✅ Update a Bank Exam
+router.put("/:id", bankExamController.updateBankExam);
+
+// ✅ Delete a Bank Exam
+router.delete("/:id", bankExamController.deleteBankExam);
+
+module.exports = router;
