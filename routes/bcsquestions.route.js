@@ -12,7 +12,7 @@ router.get("/check-duplicate", bcsCtrl.checkDuplicate);
 router.get("/all", bcsCtrl.getAllBCSExams);
 
 // Get BCS exam by year
-router.get("/:year", bcsCtrl.getBCSExamByYear);
+router.get("/:batch", bcsCtrl.getBCSExamByYear);
 
 // Get random BCS questions by subject
 router.get(

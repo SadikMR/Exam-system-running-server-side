@@ -52,11 +52,12 @@ exports.getAllBCSExams = async (req, res) => {
   }
 };
 
-// GET BCS EXAM BY YEAR
+// GET BCS EXAM BY Batch
 exports.getBCSExamByYear = async (req, res) => {
   try {
-    const { year } = req.params;
-    const exam = await BCSPreviousYear.findOne({ examYear: parseInt(year) });
+    const { batch } = req.params;
+    const exam = await BCSPreviousYear.findOne({ batch: parseInt(batch) });
+
     if (!exam)
       return res
         .status(404)
