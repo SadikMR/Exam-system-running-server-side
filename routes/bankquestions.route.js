@@ -14,6 +14,9 @@ router.get("/", bankExamController.getAllBankExams);
 // ✅ Get a single Bank Exam by ID
 router.get("/:id", bankExamController.getBankExamById);
 
+// Get BCS exam by year
+router.get("/year/:year", bankExamController.getBankExamByYear);
+
 // ✅ Update a Bank Exam
 router.put("/:id", bankExamController.updateBankExam);
 

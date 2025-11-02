@@ -75,6 +75,22 @@ exports.getBankExamById = async (req, res) => {
   }
 };
 
+// GET Bank EXAM BY year
+exports.getBankExamByYear = async (req, res) => {
+  try {
+    const { year } = req.params;
+    const exam = await BankPreviousYear.findOne({ examYear: parseInt(year) });
+
+    if (!exam)
+      return res
+        .status(404)
+        .json({ success: false, message: "Exam not found" });
+    res.json({ success: true, data: exam });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
 // ✅ Update Bank Exam
 exports.updateBankExam = async (req, res) => {
   try {
