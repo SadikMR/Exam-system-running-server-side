@@ -104,32 +104,91 @@ exports.getHSCExam = async (req, res) => {
 // ✅ GET RANDOM QUESTIONS BY SUBJECT (optional limit)
 exports.getRandomHSCQuestionsBySubject = async (req, res) => {
   try {
-    const { subjectName, limit, hscGroup, hscBoard } = req.params;
+    const { subjectName, limit } = req.params;
 
+    // Validate and parse limit
+    const numLimit = limit ? parseInt(limit, 10) : 20;
+    if (isNaN(numLimit) || numLimit <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid limit" });
+    }
+
+    if (!subjectName || typeof subjectName !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid subject name" });
+    }
+
+    // Find exams that have the subject (case-insensitive)
     const exams = await HSCPreviousYear.find({
-      hscGroup,
-      hscBoard,
-      "subjects.name": subjectName,
+      "subjects.name": { $regex: new RegExp(`^${subjectName}$`, "i") },
     });
 
-    if (!exams.length)
-      return res
-        .status(404)
-        .json({ success: false, message: "No questions found" });
+    if (!exams.length) {
+      // Return an empty structured response for consistent client handling
+      return res.json({
+        success: true,
+        data: {
+          _id: null,
+          duration: null,
+          totalQuestions: 0,
+          subjects: [],
+        },
+      });
+    }
 
+    // Collect all questions from the matching subject
     let allQuestions = [];
     exams.forEach((exam) => {
       exam.subjects.forEach((sub) => {
-        if (sub.name.toLowerCase() === subjectName.toLowerCase())
-          allQuestions.push(...sub.questions);
+        if (sub.name.toLowerCase() === subjectName.toLowerCase()) {
+          allQuestions.push(
+            ...(Array.isArray(sub.questions) ? sub.questions : [])
+          );
+        }
       });
     });
 
-    allQuestions.sort(() => 0.5 - Math.random());
-    const randomQuestions = allQuestions.slice(0, limit ? parseInt(limit) : 20);
+    if (!allQuestions.length) {
+      // Return structured response with empty questions array to avoid client errors
+      return res.json({
+        success: true,
+        data: {
+          _id: exams[0]._id,
+          duration: exams[0].duration || null,
+          totalQuestions: 0,
+          subjects: [
+            {
+              name: subjectName,
+              questions: [],
+              totalQuestions: 0,
+            },
+          ],
+        },
+      });
+    }
 
-    res.json({ success: true, data: randomQuestions });
+    // Shuffle the questions array randomly
+    allQuestions.sort(() => 0.5 - Math.random());
+
+    // Pick the requested limited number of questions
+    const randomQuestions = allQuestions.slice(0, numLimit);
+
+    // Prepare response as a single exam object with subjects array
+    const response = {
+      _id: exams[0]._id,
+      duration: exams[0].duration || null,
+      totalQuestions: randomQuestions.length,
+      subjects: [
+        {
+          name: subjectName,
+          questions: randomQuestions,
+          totalQuestions: randomQuestions.length,
+        },
+      ],
+    };
+
+    return res.json({ success: true, data: response });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    return res.status(400).json({ success: false, message: err.message });
   }
 };
