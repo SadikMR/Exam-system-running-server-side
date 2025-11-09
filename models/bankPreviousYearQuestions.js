@@ -40,7 +40,7 @@ const subjectSchema = new mongoose.Schema(
 );
 
 // Bank Exam Schema
-const bankExamSchema = new mongoose.Schema(
+const BankPreviousYearSchema = new mongoose.Schema(
   {
     examYear: { type: Number, required: true },
     subjects: { type: [subjectSchema], required: true },
@@ -54,4 +54,7 @@ const bankExamSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("BankExamQuestions", bankExamSchema);
+module.exports = mongoose.model(
+  "BankPreviousYearQuestions",
+  BankPreviousYearSchema
+);

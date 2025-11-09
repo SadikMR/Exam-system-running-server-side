@@ -11,6 +11,12 @@ router.get("/check-duplicate", bankExamController.checkDuplicate);
 // ✅ Get all Bank Exams
 router.get("/", bankExamController.getAllBankExams);
 
+// ✅ GET random questions by subject (optional limit)
+router.get(
+  "/subject/:subjectName/:limit?",
+  bankExamController.getRandomBankQuestionsBySubject
+);
+
 // ✅ Get a single Bank Exam by ID
 router.get("/:id", bankExamController.getBankExamById);
 

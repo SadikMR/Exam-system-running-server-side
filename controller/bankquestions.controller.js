@@ -126,3 +126,95 @@ exports.deleteBankExam = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+//random questions from a specific subject
+exports.getRandomBankQuestionsBySubject = async (req, res) => {
+  try {
+    const { subjectName, limit } = req.params;
+
+    // Validate and parse limit (default to 20)
+    const numLimit = limit ? parseInt(limit, 10) : 20;
+    if (isNaN(numLimit) || numLimit <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid limit" });
+    }
+
+    // Validate subjectName
+    if (!subjectName || typeof subjectName !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid subject name" });
+    }
+
+    // Find exams that include the subject (case-insensitive)
+    const exams = await BankPreviousYear.find({
+      "subjects.name": { $regex: new RegExp(`^${subjectName}$`, "i") },
+    });
+
+    if (!exams.length) {
+      // Return empty structure consistent with frontend expectations
+      return res.json({
+        success: true,
+        data: {
+          _id: null,
+          duration: null,
+          totalQuestions: 0,
+          subjects: [],
+        },
+      });
+    }
+
+    // Collect all questions in the matching subject(s)
+    let allQuestions = [];
+    exams.forEach((exam) => {
+      exam.subjects.forEach((sub) => {
+        if (sub.name.toLowerCase() === subjectName.toLowerCase()) {
+          allQuestions.push(
+            ...(Array.isArray(sub.questions) ? sub.questions : [])
+          );
+        }
+      });
+    });
+
+    if (!allQuestions.length) {
+      return res.json({
+        success: true,
+        data: {
+          _id: exams[0]._id,
+          duration: exams[0].duration || null,
+          totalQuestions: 0,
+          subjects: [
+            {
+              name: subjectName,
+              questions: [],
+              totalQuestions: 0,
+            },
+          ],
+        },
+      });
+    }
+
+    // Shuffle questions array randomly
+    allQuestions.sort(() => 0.5 - Math.random());
+
+    // Select requested number of questions
+    const randomQuestions = allQuestions.slice(0, numLimit);
+
+    // Prepare response object
+    const response = {
+      _id: exams[0]._id,
+      duration: exams[0].duration || null,
+      totalQuestions: randomQuestions.length,
+      subjects: [
+        {
+          name: subjectName,
+          questions: randomQuestions,
+          totalQuestions: randomQuestions.length,
+        },
+      ],
+    };
+
+    return res.json({ success: true, data: response });
+  } catch (err) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+};
