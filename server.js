@@ -6,11 +6,11 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const Question = require("./models/bcsquestions.model.js");
 const registrationRoute = require("./routes/registration.route");
-const adminRoute = require("./routes/admin.route.js");
 const bcsQuestionsRoute = require("./routes/bcsquestions.route.js");
 const hscQuestionsRoute = require("./routes/hscquestions.route.js");
 const bankQuestionsRoute = require("./routes/bankquestions.route.js");
 const liveExamRoutes = require("./routes/liveExam");
+const AdminRoutes = require("./routes/Admin/adminRoutes.js");
 
 // Load environment variables from .env file
 dotenv.config();
@@ -18,10 +18,10 @@ dotenv.config();
 // Create an instance of Express
 const app = express();
 
-// Middleware to parse JSON bodies
+// Middleware to parse JSON bodies with increased size limit
 app.use(cors()); // To allow cross-origin requests from your frontend
-app.use(bodyParser.json()); // Parse incoming JSON requests
-app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: "20mb" })); // Parse incoming JSON requests with 10MB limit
+app.use(bodyParser.urlencoded({ limit: "20mb", extended: true })); // Parse URL-encoded data with 10MB limit
 
 // MongoDB connection using Mongoose
 const connectDB = async () => {
@@ -57,8 +57,7 @@ app.get("/api/questions", async (req, res) => {
 
 // For registration, login
 app.use("/api/auth", registrationRoute);
-// For admin
-app.use("/admin", adminRoute);
+
 // Fetch the BCS exam questions
 app.use("/bcs-questions", bcsQuestionsRoute);
 // Fetch the HSC exam questions
@@ -86,6 +85,8 @@ app.post("/api/questions", async (req, res) => {
     res.status(500).send({ error: "Failed to save questions." });
   }
 });
+
+app.use("/admin", AdminRoutes);
 
 // Start the server
 const PORT = process.env.SERVER_PORT || 5000;
