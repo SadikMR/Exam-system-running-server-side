@@ -5,12 +5,12 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const Question = require("./models/bcsquestions.model.js");
-const registrationRoute = require("./routes/registration.route");
 const bcsQuestionsRoute = require("./routes/bcsquestions.route.js");
 const hscQuestionsRoute = require("./routes/hscquestions.route.js");
 const bankQuestionsRoute = require("./routes/bankquestions.route.js");
 const liveExamRoutes = require("./routes/liveExam");
 const AdminRoutes = require("./routes/Admin/adminRoutes.js");
+const UserRoutes = require("./routes/userRoutes.js");
 
 // Load environment variables from .env file
 dotenv.config();
@@ -55,8 +55,7 @@ app.get("/api/questions", async (req, res) => {
   }
 });
 
-// For registration, login
-app.use("/api/auth", registrationRoute);
+app.use("/user", UserRoutes);
 
 // Fetch the BCS exam questions
 app.use("/bcs-questions", bcsQuestionsRoute);
