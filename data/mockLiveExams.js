@@ -13,7 +13,7 @@ const generateExamCode = (type, index) => {
 // Mock live exams data that matches your actual MongoDB structure
 const mockLiveExams = [
   {
-    _id: "64a1b2c3d4e5f6789012345",
+    _id: "6910a66fccfdc785e035eba6",
     title: "47th BCS Preliminary Mock Test",
     code: generateExamCode("BCS", 1),
     examType: "BCS",

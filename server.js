@@ -11,6 +11,7 @@ const bankQuestionsRoute = require("./routes/bankquestions.route.js");
 const liveExamRoutes = require("./routes/liveExam");
 const AdminRoutes = require("./routes/Admin/adminRoutes.js");
 const UserRoutes = require("./routes/userRoutes.js");
+const practiceExamSubmissionRoutes = require("./routes/practiceExamSubmission.route.js");
 
 // Load environment variables from .env file
 dotenv.config();
@@ -66,6 +67,9 @@ app.use("/bank-questions", bankQuestionsRoute);
 
 //Live Exam Route
 app.use("/liveExam", liveExamRoutes);
+
+//practice exam submission
+app.use("/practice-exam", practiceExamSubmissionRoutes);
 
 // Save BCS questions
 app.post("/api/questions", async (req, res) => {

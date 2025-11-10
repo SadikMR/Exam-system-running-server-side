@@ -1,11 +1,11 @@
 const express = require("express");
 const { createLiveExam } = require("../controller/createLiveExam");
 const {
-  submitLiveExam,
-  getSubmission,
-  getUserSubmissions,
-  getExamSubmissions,
-} = require("../controller/liveSubmit.controller");
+  submitExam,
+  getSubmissionsByExamId,
+  getSubmissionByExamAndUser,
+  getSubmissionsByUserId,
+} = require("../controller/liveExamController/liveExamSubmission.controller");
 
 const {
   fetchActiveLiveExams,
@@ -19,12 +19,18 @@ const router = express.Router();
 
 // POST routes
 router.post("/create", createLiveExam);
-router.post("/submit", submitLiveExam);
 
-// GET routes for submissions
-router.get("/submission/:submissionId", getSubmission);
-router.get("/user/:userId/submissions", getUserSubmissions);
-router.get("/exam/:examId/submissions", getExamSubmissions);
+// Submit submission
+router.post("/submit", submitExam);
+
+// Get submissions by user ID (PUT THIS FIRST - more specific route)
+router.get("/submission/user/:userId", getSubmissionsByUserId);
+
+// Get submissions by exam ID
+router.get("/submission/exam/:examId", getSubmissionsByExamId);
+
+// Get submission by exam ID and user ID
+router.get("/submission/exam/:examId/user/:userId", getSubmissionByExamAndUser);
 
 // Mock data route
 router.get("/mock", (req, res) => {
