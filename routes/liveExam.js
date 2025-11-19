@@ -2,6 +2,7 @@ const express = require("express");
 const { createLiveExam } = require("../controller/createLiveExam");
 const {
   submitExam,
+  getSubmissionById,
   getSubmissionsByExamId,
   getSubmissionByExamAndUser,
   getSubmissionsByUserId,
@@ -22,6 +23,9 @@ router.post("/create", createLiveExam);
 
 // Submit submission
 router.post("/submit", submitExam);
+
+// ✅ Add this route (PUT IT BEFORE OTHER SUBMISSION ROUTES)
+router.get("/submission/:submissionId", getSubmissionById);
 
 // Get submissions by user ID (PUT THIS FIRST - more specific route)
 router.get("/submission/user/:userId", getSubmissionsByUserId);

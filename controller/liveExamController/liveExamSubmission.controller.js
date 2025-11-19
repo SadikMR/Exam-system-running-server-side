@@ -60,6 +60,39 @@ exports.submitExam = async (req, res) => {
   }
 };
 
+// @desc    Get submission by submission ID
+// @route   GET /api/liveExam/submission/:submissionId
+// @access  Private
+exports.getSubmissionById = async (req, res) => {
+  try {
+    const { submissionId } = req.params;
+
+    const submission = await LiveExamSubmission.findById(submissionId)
+      .populate("examId", "title examType duration tags")
+      .lean();
+
+    if (!submission) {
+      return res.status(404).json({
+        success: false,
+        message: "Submission not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      submission,
+    });
+  } catch (error) {
+    console.error("Error fetching submission:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Error fetching submission",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
 // @desc    Get all submissions for a specific exam
 // @route   GET /api/exam-submissions/exam/:examId
 // @access  Private/Admin
