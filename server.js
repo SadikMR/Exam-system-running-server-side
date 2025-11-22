@@ -26,7 +26,6 @@ app.use(bodyParser.urlencoded({ limit: "20mb", extended: true })); // Parse URL-
 
 // MongoDB connection using Mongoose
 const connectDB = async () => {
-  console.log("Render MongoDB URI:", process.env.MONGODB_URI);
   try {
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
@@ -95,7 +94,9 @@ app.use("/admin", AdminRoutes);
 // Start the server
 const PORT = process.env.SERVER_PORT || 5000;
 app.listen(PORT, () => {
+  console.log("Render MongoDB URI:", process.env.MONGODB_URI);
   console.log(`🚀 Server is running on port ${PORT}`);
+  console.log();
 });
 
 // Close MongoDB connection when shutting down the app
