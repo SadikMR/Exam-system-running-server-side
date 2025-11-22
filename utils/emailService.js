@@ -2,13 +2,14 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
-  service: "Gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // false for TLS
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // Ensure you use an App Password if needed
+    pass: process.env.EMAIL_PASS, // must be an App Password
   },
 });
-
 const sendInvitationEmail = async (to, invitationLink, role = "admin") => {
   const mailOptions = {
     from: `Online Exam System <${process.env.EMAIL_USER}>`,
