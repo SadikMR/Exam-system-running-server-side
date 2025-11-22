@@ -12,6 +12,7 @@ const liveExamRoutes = require("./routes/liveExam");
 const AdminRoutes = require("./routes/Admin/adminRoutes.js");
 const UserRoutes = require("./routes/userRoutes.js");
 const practiceExamSubmissionRoutes = require("./routes/practiceExamSubmission.route.js");
+const { sendInvitationEmail } = require("./utils/emailService.js");
 
 // Load environment variables from .env file
 dotenv.config();
