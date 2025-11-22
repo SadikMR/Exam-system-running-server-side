@@ -99,6 +99,19 @@ app.listen(PORT, () => {
   console.log();
 });
 
+app.get("/test-email", async (req, res) => {
+  try {
+    await sendInvitationEmail(
+      "your_email@gmail.com",
+      `${process.env.FRONTEND_URL}/admin/register?token=test`
+    );
+    res.send("Email sent!");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Email failed: " + err.message);
+  }
+});
+
 // Close MongoDB connection when shutting down the app
 process.on("SIGINT", async () => {
   await mongoose.connection.close();
