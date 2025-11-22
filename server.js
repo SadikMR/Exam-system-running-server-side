@@ -26,8 +26,8 @@ app.use(bodyParser.urlencoded({ limit: "20mb", extended: true })); // Parse URL-
 
 // MongoDB connection using Mongoose
 const connectDB = async () => {
+  console.log("Render MongoDB URI:", process.env.MONGODB_URI);
   try {
-    console.log("Render MongoDB URI:", process.env.MONGODB_URI);
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
