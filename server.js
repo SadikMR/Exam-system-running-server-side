@@ -11,7 +11,9 @@ const bankQuestionsRoute = require("./routes/bankquestions.route.js");
 const liveExamRoutes = require("./routes/liveExam");
 const AdminRoutes = require("./routes/Admin/adminRoutes.js");
 const UserRoutes = require("./routes/userRoutes.js");
+const ProfileRoutes = require("./routes/profileRoutes.js");
 const practiceExamSubmissionRoutes = require("./routes/practiceExamSubmission.route.js");
+
 const { sendInvitationEmail } = require("./utils/emailService.js");
 
 // Load environment variables from .env file
@@ -22,8 +24,8 @@ const app = express();
 
 // Middleware to parse JSON bodies with increased size limit
 app.use(cors()); // To allow cross-origin requests from your frontend
-app.use(bodyParser.json({ limit: "20mb" })); // Parse incoming JSON requests with 10MB limit
-app.use(bodyParser.urlencoded({ limit: "20mb", extended: true })); // Parse URL-encoded data with 10MB limit
+app.use(bodyParser.json({ limit: "20mb" })); // Parse incoming JSON requests with 20MB limit
+app.use(bodyParser.urlencoded({ limit: "20mb", extended: true })); // Parse URL-encoded data with 20MB limit
 
 // MongoDB connection using Mongoose
 const connectDB = async () => {
@@ -58,6 +60,9 @@ app.get("/api/questions", async (req, res) => {
 });
 
 app.use("/user", UserRoutes);
+
+// Profile and Verification Routes (NEW)
+app.use("/api", ProfileRoutes);
 
 // Fetch the BCS exam questions
 app.use("/bcs-questions", bcsQuestionsRoute);

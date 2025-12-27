@@ -45,12 +45,59 @@ const UserSchema = new mongoose.Schema(
       },
     },
     address: { type: String, trim: true },
-    image: { type: String }, // base64 string or URL
-    collegeOrUniversity: { type: String, trim: true }, // New field
+    image: { type: String },
+    collegeOrUniversity: { type: String, trim: true },
     password: { type: String, required: true },
 
-    resetPasswordToken: { type: String }, // Add here inside schema
-    resetPasswordExpires: { type: Date }, // Add here inside schema
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
+
+    // Verification fields
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationStatus: {
+      type: String,
+      enum: ["unverified", "verified"],
+      default: "unverified",
+    },
+    verifiedAt: {
+      type: Date,
+      default: null,
+    },
+    verificationSubmittedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // Cloudinary verification images
+    verificationImages: {
+      front: {
+        type: String,
+        default: null,
+      },
+      left: {
+        type: String,
+        default: null,
+      },
+      right: {
+        type: String,
+        default: null,
+      },
+      up: {
+        type: String,
+        default: null,
+      },
+    },
+
+    // Enrollment/Registration info
+    enrollmentId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    dateOfBirth: Date,
   },
   { timestamps: true }
 );
