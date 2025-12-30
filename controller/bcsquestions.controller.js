@@ -1,160 +1,161 @@
-const BcsYear = require("../models/bcsquestions.model"); // Ensure model name matches your export
-const BCSQuestion = require("../models/bcsquestions.model");
-const BCSOthers = require("../models/bcsOthers.model");
+const BCSPreviousYear = require("../models/bcsPreviousYearQuestions");
 
-{
-  /* All Questions Exam */
-}
-exports.getQuestions = async (req, res) => {
-  const year = parseInt(req.params.year); // Convert year to an integer
-  console.log("Received year:", year); // Log the received year
-
+// CREATE NEW BCS EXAM
+exports.createBCSExam = async (req, res) => {
   try {
-    // Query to find all questions for the specified year
-    const questions = await BCSQuestion.find({ bcsYear: year });
+    const { examYear, batch, subjects } = req.body;
 
-    if (questions.length > 0) {
-      // Group questions by subject
-      const groupedQuestions = questions.reduce((acc, question) => {
-        if (!acc[question.subject]) {
-          acc[question.subject] = [];
-        }
+    // Create new document
+    const exam = new BCSPreviousYear({ examYear, batch, subjects });
+    await exam.save();
 
-        // Convert options from object to array (if necessary)
-        const optionsArray = Array.isArray(question.options)
-          ? question.options
-          : Object.values(question.options); // Convert options object to an array
-
-        acc[question.subject].push({
-          question: question.questionText,
-          options: optionsArray, // Ensure options is an array
-          correctAnswer: question.correctAnswer,
-          explanation: question.explanation,
-        });
-        return acc;
-      }, {});
-
-      const response = Object.keys(groupedQuestions).map((subject) => ({
-        subject_name: subject,
-        questions: groupedQuestions[subject],
-      }));
-
-      res.json(response); // Return grouped questions by subject
-    } else {
-      return res.status(200).json({ questions: null });
-    }
-  } catch (error) {
-    console.error("Error fetching questions:", error); // Log the error for debugging
-    res.status(500).json({ message: "Internal server error." }); // Return 500 error
+    res.status(201).json({ success: true, data: exam });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
-{
-  /*  Subject Wise Exam   */
-}
-
-exports.getBcsQuestionsBySubjectWise = async (req, res) => {
+// checking duplicates (using GET)
+exports.checkDuplicate = async (req, res) => {
   try {
-    const { subject, totalQuestions } = req.params;
-    console.log("Came");
-    // Validate the parameters
-    if (!subject || !totalQuestions) {
+    const { batch } = req.query;
+
+    if (!batch) {
       return res
         .status(400)
-        .json({ message: "Subject and totalQuestions are required." });
+        .json({ exists: false, message: "Batch is required" });
     }
 
-    const totalQuestionsCount = parseInt(totalQuestions);
+    const exists = await BCSPreviousYear.findOne({ batch });
 
-    if (isNaN(totalQuestionsCount) || totalQuestionsCount <= 0) {
-      return res
-        .status(400)
-        .json({ message: "Invalid totalQuestions parameter." });
-    }
-
-    const questions = await BCSQuestion.find({ subject })
-      .limit(totalQuestionsCount)
-      .exec();
-
-    if (questions.length === 0) {
-      return res.status(200).json({ questions: null });
-    }
-
-    // Convert options object to an array and process each question
-    const processedQuestions = questions.map((question) => {
-      const optionsArray = Object.values(question.options); // Converts {A: 'Option A', B: 'Option B'} to ['Option A', 'Option B', ...]
-      return {
-        ...question.toObject(), // Convert question document to plain object
-        options: optionsArray, // Add the array of options
-      };
-    });
-
-    res.status(200).json({ questions: processedQuestions });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error. Please try again later." });
-  }
-};
-
-//save BCS others questions
-
-exports.SaveBCSOthersQuestions = async (req, res) => {
-  try {
-    const questions = req.body;
-
-    if (!Array.isArray(questions) || questions.length === 0) {
-      return res.status(400).json({
-        message: "Request body should be a non-empty array of questions.",
+    if (exists) {
+      return res.json({
+        exists: true,
+        message: `BCS questions already exist for Batch ${batch}!`,
       });
     }
-    await BCSOthers.deleteMany({});
 
-    const savedQuestions = await BCSOthers.insertMany(questions);
-    res.status(201).json({
-      message: `${savedQuestions.length} question(s) saved successfully.`,
-      data: savedQuestions,
-    });
-  } catch (error) {
-    console.error("Error saving questions to BCSOthers:", error);
-    res.status(500).json({ message: "Server error while saving questions." });
+    res.json({ exists: false });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ exists: false, message: err.message });
   }
 };
 
-exports.getBCSOthersQuestions = async (req, res) => {
+// GET ALL BCS EXAMS
+exports.getAllBCSExams = async (req, res) => {
   try {
-    const questions = await BCSOthers.find();
+    const exams = await BCSPreviousYear.find().sort({ examYear: -1 });
+    res.json({ success: true, data: exams });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
 
-    if (questions.length === 0) {
-      return res.status(404).json({ message: "No questions found." });
+// GET BCS EXAM BY Batch
+exports.getBCSExamByYear = async (req, res) => {
+  try {
+    const { batch } = req.params;
+    const exam = await BCSPreviousYear.findOne({ batch: parseInt(batch) });
+
+    if (!exam)
+      return res
+        .status(404)
+        .json({ success: false, message: "Exam not found" });
+    res.json({ success: true, data: exam });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// GET RANDOM QUESTIONS BY SUBJECT ACROSS YEARS
+exports.getRandomBCSQuestionsBySubject = async (req, res) => {
+  try {
+    const { subjectName, limit } = req.params;
+
+    // Validate and parse limit
+    const numLimit = limit ? parseInt(limit, 10) : 20;
+    if (isNaN(numLimit) || numLimit <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid limit" });
     }
 
-    const modifiedQuestions = questions.map((q) => {
-      let optionsArray = [];
+    if (!subjectName || typeof subjectName !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid subject name" });
+    }
 
-      if (
-        q.options &&
-        typeof q.options === "object" &&
-        q.options.A &&
-        q.options.B &&
-        q.options.C &&
-        q.options.D
-      ) {
-        optionsArray = [q.options.A, q.options.B, q.options.C, q.options.D];
-      }
-
-      return {
-        ...q.toObject(),
-        options: optionsArray,
-      };
+    // Find exams that have the subject (case-insensitive)
+    const exams = await BCSPreviousYear.find({
+      "subjects.name": { $regex: new RegExp(`^${subjectName}$`, "i") },
     });
 
-    res.status(200).json({
-      message: `${modifiedQuestions.length} question(s) found.`,
-      data: modifiedQuestions,
+    if (!exams.length) {
+      // Return an empty structured response for consistent client handling
+      return res.json({
+        success: true,
+        data: {
+          _id: null,
+          duration: null,
+          totalQuestions: 0,
+          subjects: [],
+        },
+      });
+    }
+
+    // Collect all questions from the matching subject
+    let allQuestions = [];
+    exams.forEach((exam) => {
+      exam.subjects.forEach((sub) => {
+        if (sub.name.toLowerCase() === subjectName.toLowerCase()) {
+          allQuestions.push(
+            ...(Array.isArray(sub.questions) ? sub.questions : [])
+          );
+        }
+      });
     });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching questions", error: error.message });
+
+    if (!allQuestions.length) {
+      // Return structured response with empty questions array to avoid client errors
+      return res.json({
+        success: true,
+        data: {
+          _id: exams[0]._id,
+          duration: exams[0].duration || null,
+          totalQuestions: 0,
+          subjects: [
+            {
+              name: subjectName,
+              questions: [],
+              totalQuestions: 0,
+            },
+          ],
+        },
+      });
+    }
+
+    // Shuffle the questions array randomly
+    allQuestions.sort(() => 0.5 - Math.random());
+
+    // Pick the requested limited number of questions
+    const randomQuestions = allQuestions.slice(0, numLimit);
+
+    // Prepare response as a single exam object with subjects array
+    const response = {
+      _id: exams[0]._id,
+      duration: exams[0].duration || null,
+      totalQuestions: randomQuestions.length,
+      subjects: [
+        {
+          name: subjectName,
+          questions: randomQuestions,
+          totalQuestions: randomQuestions.length,
+        },
+      ],
+    };
+
+    return res.json({ success: true, data: response });
+  } catch (err) {
+    return res.status(400).json({ success: false, message: err.message });
   }
 };

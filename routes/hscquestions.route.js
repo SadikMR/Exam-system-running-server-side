@@ -1,45 +1,26 @@
 const express = require("express");
-const {
-  getHscQuestionsByDepartment,
-  getHscQuestionsBySubjectWise,
-  savePrevHscQuestions,
-  getPrevHscQuestions,
-  getHSCOthersQuestions,
-  SaveHSCOthersQuestions,
-} = require("../controller/hscquestions.controller");
-const {
-  saveHscExamResultHistory,
-  getHscExamResultHistory,
-  saveHscSubjectWiseResultHistory,
-  getHscSubjectWiseResultHistory,
-} = require("../controller/hscHistory.controller");
 const router = express.Router();
+const {
+  createHSCExam,
+  getAllHSCExams,
+  getHSCExam,
+  getRandomHSCQuestionsBySubject,
+  checkDuplicate,
+} = require("../controller/hscquestions.controller");
 
-//Exam :
-// Hsc all questions exam
-router.get("/get-questions/:department", getHscQuestionsByDepartment);
-// Hsc Subject Wise Exam
-router.get(
-  "/hsc-subjectWise/:subject/:totalQuestions",
-  getHscQuestionsBySubjectWise
-);
+// ✅ CREATE a new HSC previous year exam
+router.post("/create", createHSCExam);
 
-router.get("/getPrevHscQuestions/:group/:board/:examYear", getPrevHscQuestions);
+//checking duplicate
+router.get("/check-duplicate", checkDuplicate);
 
-// Route to save HSC questions
-router.post("/savePrevHscQuestions", savePrevHscQuestions);
+// ✅ GET all HSC previous year exams
+router.get("/", getAllHSCExams);
 
-// History :
-//Hsc all questions exam history :
-router.post("/save-result-history", saveHscExamResultHistory);
-router.get("/get-result-history", getHscExamResultHistory);
+// ✅ GET random questions by subject (optional limit)
+router.get("/subject/:subjectName/:limit?", getRandomHSCQuestionsBySubject);
 
-// Hsc Subject Wise Exam History :
-router.post("/save-hsc-subjectWise-history", saveHscSubjectWiseResultHistory);
-router.get("/get-hsc-subjectWise-history", getHscSubjectWiseResultHistory);
-
-//HSC others
-router.post("/saveOthersQuestions", SaveHSCOthersQuestions);
-router.get("/getOthersQuestions", getHSCOthersQuestions);
+// ✅ GET a specific HSC exam by year + group + board
+router.get("/:year/:group/:board", getHSCExam);
 
 module.exports = router;

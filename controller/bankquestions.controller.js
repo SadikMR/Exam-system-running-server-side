@@ -1,0 +1,220 @@
+const BankPreviousYear = require("../models/bankPreviousYearQuestions");
+
+// ✅ Create Bank Exam (Add New Exam with Subjects and Questions)
+exports.createBankExam = async (req, res) => {
+  try {
+    const { examYear, subjects } = req.body;
+
+    if (!examYear || !subjects || !Array.isArray(subjects)) {
+      return res.status(400).json({ message: "Invalid input data" });
+    }
+
+    const newExam = new BankPreviousYear({
+      examYear,
+      subjects,
+    });
+
+    await newExam.save();
+
+    res.status(201).json({
+      message: "Bank exam created successfully",
+      exam: newExam,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+//checking duplicate
+exports.checkDuplicate = async (req, res) => {
+  try {
+    const { examYear } = req.query;
+
+    if (!examYear) {
+      return res
+        .status(400)
+        .json({ exists: false, message: "year is required" });
+    }
+
+    const exists = await BankPreviousYear.findOne({ examYear });
+
+    if (exists) {
+      return res.json({
+        exists: true,
+        message: `Bank questions already exist for ${examYear}!`,
+      });
+    }
+
+    res.json({ exists: false });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ exists: false, message: err.message });
+  }
+};
+
+// ✅ Get All Bank Exams
+exports.getAllBankExams = async (req, res) => {
+  try {
+    const exams = await BankPreviousYear.find();
+    res.status(200).json(exams);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ✅ Get Single Bank Exam by ID
+exports.getBankExamById = async (req, res) => {
+  try {
+    const exam = await BankPreviousYear.findById(req.params.id);
+    if (!exam) {
+      return res.status(404).json({ message: "Exam not found" });
+    }
+    res.status(200).json(exam);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// GET Bank EXAM BY year
+exports.getBankExamByYear = async (req, res) => {
+  try {
+    const { year } = req.params;
+    const exam = await BankPreviousYear.findOne({ examYear: parseInt(year) });
+
+    if (!exam)
+      return res
+        .status(404)
+        .json({ success: false, message: "Exam not found" });
+    res.json({ success: true, data: exam });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// ✅ Update Bank Exam
+exports.updateBankExam = async (req, res) => {
+  try {
+    const updatedExam = await BankPreviousYear.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    if (!updatedExam) {
+      return res.status(404).json({ message: "Exam not found" });
+    }
+
+    res.status(200).json({
+      message: "Exam updated successfully",
+      exam: updatedExam,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ✅ Delete Bank Exam
+exports.deleteBankExam = async (req, res) => {
+  try {
+    const deletedExam = await BankPreviousYear.findByIdAndDelete(req.params.id);
+    if (!deletedExam) {
+      return res.status(404).json({ message: "Exam not found" });
+    }
+
+    res.status(200).json({ message: "Exam deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+//random questions from a specific subject
+exports.getRandomBankQuestionsBySubject = async (req, res) => {
+  try {
+    const { subjectName, limit } = req.params;
+
+    // Validate and parse limit (default to 20)
+    const numLimit = limit ? parseInt(limit, 10) : 20;
+    if (isNaN(numLimit) || numLimit <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid limit" });
+    }
+
+    // Validate subjectName
+    if (!subjectName || typeof subjectName !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid subject name" });
+    }
+
+    // Find exams that include the subject (case-insensitive)
+    const exams = await BankPreviousYear.find({
+      "subjects.name": { $regex: new RegExp(`^${subjectName}$`, "i") },
+    });
+
+    if (!exams.length) {
+      // Return empty structure consistent with frontend expectations
+      return res.json({
+        success: true,
+        data: {
+          _id: null,
+          duration: null,
+          totalQuestions: 0,
+          subjects: [],
+        },
+      });
+    }
+
+    // Collect all questions in the matching subject(s)
+    let allQuestions = [];
+    exams.forEach((exam) => {
+      exam.subjects.forEach((sub) => {
+        if (sub.name.toLowerCase() === subjectName.toLowerCase()) {
+          allQuestions.push(
+            ...(Array.isArray(sub.questions) ? sub.questions : [])
+          );
+        }
+      });
+    });
+
+    if (!allQuestions.length) {
+      return res.json({
+        success: true,
+        data: {
+          _id: exams[0]._id,
+          duration: exams[0].duration || null,
+          totalQuestions: 0,
+          subjects: [
+            {
+              name: subjectName,
+              questions: [],
+              totalQuestions: 0,
+            },
+          ],
+        },
+      });
+    }
+
+    // Shuffle questions array randomly
+    allQuestions.sort(() => 0.5 - Math.random());
+
+    // Select requested number of questions
+    const randomQuestions = allQuestions.slice(0, numLimit);
+
+    // Prepare response object
+    const response = {
+      _id: exams[0]._id,
+      duration: exams[0].duration || null,
+      totalQuestions: randomQuestions.length,
+      subjects: [
+        {
+          name: subjectName,
+          questions: randomQuestions,
+          totalQuestions: randomQuestions.length,
+        },
+      ],
+    };
+
+    return res.json({ success: true, data: response });
+  } catch (err) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+};
