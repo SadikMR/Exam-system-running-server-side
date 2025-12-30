@@ -1,5 +1,6 @@
 const LiveExamRegistration = require("../../models/liveExamRegistration.model");
 const LiveExam = require("../../models/liveExam");
+const User = require("../../models/User/users");
 
 // @desc    Register user for a live exam
 // @route   POST /liveExam/register
@@ -20,6 +21,23 @@ exports.registerForExam = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Exam ID is required",
+      });
+    }
+
+    // Check if user is verified
+    const user = await User.findById(userId).select("isVerified verificationStatus");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.isVerified || user.verificationStatus !== "verified") {
+      return res.status(403).json({
+        success: false,
+        message: "Only verified users can register for live exams. Please complete your verification first.",
+        requiresVerification: true,
       });
     }
 
@@ -133,6 +151,24 @@ exports.checkRegistration = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: "Authentication required",
+      });
+    }
+
+    // Check if user is verified
+    const user = await User.findById(userId).select("isVerified verificationStatus");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.isVerified || user.verificationStatus !== "verified") {
+      return res.status(403).json({
+        success: false,
+        message: "Only verified users can access live exams. Please complete your verification first.",
+        requiresVerification: true,
+        isRegistered: false,
       });
     }
 
