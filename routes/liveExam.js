@@ -114,4 +114,17 @@ router.get("/upcoming", optionalAuth, fetchUpcomingLiveExams);
 
 router.get("/", optionalAuth, fetchLiveExams);
 
+// Exam History routes (Admin)
+const {
+  getFinishedExams,
+  getExamRanking,
+  getUserExamDetails,
+  getUserExamHistory,
+} = require("../controller/examHistoryController");
+
+router.get("/history", getFinishedExams);
+router.get("/history/:examId/ranking", getExamRanking);
+router.get("/history/:examId/user/:userId", getUserExamDetails);
+router.get("/history/user/:userId/all", getUserExamHistory);
+
 module.exports = router;
