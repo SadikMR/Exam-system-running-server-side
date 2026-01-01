@@ -127,4 +127,13 @@ router.get("/history/:examId/ranking", getExamRanking);
 router.get("/history/:examId/user/:userId", getUserExamDetails);
 router.get("/history/user/:userId/all", getUserExamHistory);
 
+// Student routes
+const {
+  getExamReview,
+  getLiveExamLeaderboard,
+} = require("../controller/examReviewController");
+
+router.get("/student/exam-review/:submissionId", authMiddleware, getExamReview);
+router.get("/student/live-exam/:examId/leaderboard", authMiddleware, getLiveExamLeaderboard);
+
 module.exports = router;

@@ -99,6 +99,29 @@ const PracticeExamSubmissionSchema = new mongoose.Schema(
           );
         },
       },
+
+      // ✅ subjects: Store full exam structure with questions for review
+      subjects: [
+        {
+          name: { type: String, required: true },
+          questionCount: { type: Number },
+          questions: [
+            {
+              text: { type: String, required: true },
+              options: [{ type: String, required: true }],
+              correctAnswer: { type: Number, required: true },
+              marks: { type: Number, default: 1 },
+              negativeMarks: { type: Number, default: 0 },
+              difficulty: {
+                type: String,
+                enum: ["easy", "medium", "hard"],
+                default: "medium",
+              },
+              explanation: { type: String, default: "" },
+            },
+          ],
+        },
+      ],
     },
 
     // Answers (questionKey -> selectedOptionIndex)
