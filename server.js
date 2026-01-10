@@ -24,10 +24,17 @@ dotenv.config();
 const app = express();
 
 // Middleware to parse JSON bodies with increased size limit
-app.use(cors()); // To allow cross-origin requests from your frontend
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173", // local dev frontend
+      "https://exam-desk-three.vercel.app", // live frontend
+    ],
+    credentials: true,
+  })
+); // To allow cross-origin requests from your frontend
 app.use(bodyParser.json({ limit: "20mb" })); // Parse incoming JSON requests with 20MB limit
 app.use(bodyParser.urlencoded({ limit: "20mb", extended: true })); // Parse URL-encoded data with 20MB limit
-
 
 // Define a simple route
 app.get("/", (req, res) => {
@@ -101,7 +108,7 @@ app.get("/test-email", async (req, res) => {
 if (process.env.VERCEL !== "1") {
   // Connect to MongoDB for local development
   connectDB();
-  
+
   const PORT = process.env.SERVER_PORT || 5000;
   app.listen(PORT, () => {
     console.log("Render MongoDB URI:", process.env.MONGODB_URI);
