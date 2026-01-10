@@ -13,6 +13,7 @@ const AdminRoutes = require("./routes/Admin/adminRoutes.js");
 const UserRoutes = require("./routes/userRoutes.js");
 const ProfileRoutes = require("./routes/profileRoutes.js");
 const practiceExamSubmissionRoutes = require("./routes/practiceExamSubmission.route.js");
+const connectDB = require("./config/db.js");
 
 const { sendInvitationEmail } = require("./utils/emailService.js");
 
@@ -27,22 +28,6 @@ app.use(cors()); // To allow cross-origin requests from your frontend
 app.use(bodyParser.json({ limit: "20mb" })); // Parse incoming JSON requests with 20MB limit
 app.use(bodyParser.urlencoded({ limit: "20mb", extended: true })); // Parse URL-encoded data with 20MB limit
 
-// MongoDB connection using Mongoose
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("✅ MongoDB Connected");
-  } catch (error) {
-    console.error("❌ Error connecting to MongoDB:", error);
-    process.exit(1); // Exit with failure
-  }
-};
-
-// Connect to MongoDB
-connectDB();
 
 // Define a simple route
 app.get("/", (req, res) => {
@@ -97,14 +82,7 @@ app.post("/api/questions", async (req, res) => {
 
 app.use("/admin", AdminRoutes);
 
-// Start the server
-const PORT = process.env.SERVER_PORT || 5000;
-app.listen(PORT, () => {
-  console.log("Render MongoDB URI:", process.env.MONGODB_URI);
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log();
-});
-
+// Test email route
 app.get("/test-email", async (req, res) => {
   try {
     await sendInvitationEmail(
@@ -118,9 +96,25 @@ app.get("/test-email", async (req, res) => {
   }
 });
 
-// Close MongoDB connection when shutting down the app
-process.on("SIGINT", async () => {
-  await mongoose.connection.close();
-  console.log("🛑 MongoDB connection closed");
-  process.exit(0);
-});
+// Only start the server if running locally (not on Vercel)
+// Vercel will import and use the exported app directly
+if (process.env.VERCEL !== "1") {
+  // Connect to MongoDB for local development
+  connectDB();
+  
+  const PORT = process.env.SERVER_PORT || 5000;
+  app.listen(PORT, () => {
+    console.log("Render MongoDB URI:", process.env.MONGODB_URI);
+    console.log(`🚀 Server is running on port ${PORT}`);
+  });
+
+  // Close MongoDB connection when shutting down the app
+  process.on("SIGINT", async () => {
+    await mongoose.connection.close();
+    console.log("🛑 MongoDB connection closed");
+    process.exit(0);
+  });
+}
+
+// Export the Express app for Vercel serverless functions
+module.exports = app;
