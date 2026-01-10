@@ -9,6 +9,10 @@ router.post("/login", userController.loginUser);
 router.post("/request-password-reset", userController.requestPasswordReset);
 router.post("/reset-password", userController.resetPassword);
 
+// Public user profile route (for viewing other users)
+const userProfileController = require("../controller/userProfileController");
+router.get("/profile/:userId", userProfileController.getUserProfile);
+
 // Protected routes requiring JWT auth
 router.get("/profile", authMiddleware, userController.getUserProfile);
 router.put("/profile", authMiddleware, userController.updateUserProfile);

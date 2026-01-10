@@ -1,5 +1,3 @@
-// routes/practiceExamSubmissionRoutes.js
-
 const express = require("express");
 const router = express.Router();
 const {
@@ -8,7 +6,10 @@ const {
   getSubmissionsByUserId,
   getSubmissionByExamAndUser,
   getSubmissionsByExamType,
+  getPracticeExamReview,
 } = require("../controller/practiceExam.controller");
+
+const authMiddleware = require("../middleware/userAuthMiddleware");
 
 // 1. Submit practice exam
 router.post("/submit", submitPracticeExam);
@@ -24,5 +25,8 @@ router.get("/exam/:examId/user/:userId", getSubmissionByExamAndUser);
 
 // 5. Get submissions by exam type (HSC/BCS/Bank)
 router.get("/type/:examType", getSubmissionsByExamType);
+
+// 6. Get detailed exam review for student (practice exams)
+router.get("/review/:submissionId", authMiddleware, getPracticeExamReview);
 
 module.exports = router;

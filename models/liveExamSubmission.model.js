@@ -110,6 +110,13 @@ const LiveExamSubmissionSchema = new mongoose.Schema(
       windowBlur: { type: Number, default: 0 },
     },
 
+    // Common violation counter (increments for both web focus and webcam violations)
+    commonViolationCount: { type: Number, default: 0 },
+
+    // Banning fields
+    isBanned: { type: Boolean, default: false },
+    banReason: { type: String },
+
     // Completion metadata
     completionReason: {
       type: String,

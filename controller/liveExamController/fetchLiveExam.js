@@ -1,6 +1,9 @@
 const LiveExam = require("../../models/liveExam"); // Adjust path as needed
+const LiveExamSubmission = require("../../models/liveExamSubmission.model");
+const LiveExamRegistration = require("../../models/liveExamRegistration.model");
 
 // Fetch active live exams (not ended yet) with comprehensive data
+// Filters out exams that the user has already participated in (if authenticated)
 const fetchActiveLiveExams = async (req, res) => {
   try {
     const currentTime = new Date();
@@ -16,12 +19,48 @@ const fetchActiveLiveExams = async (req, res) => {
       .sort({ startTime: 1 })
       .lean();
 
+    // If user is authenticated, filter out exams they've already participated in
+    let filteredExams = exams;
+    let userRegistrations = new Map();
+    
+    if (req.user && req.user.userId) {
+      const userId = req.user.userId;
+      
+      // Get all exam IDs that the user has already submitted
+      const userSubmissions = await LiveExamSubmission.find({ userId })
+        .select("examId")
+        .lean();
+      
+      const participatedExamIds = new Set(
+        userSubmissions.map((submission) => submission.examId.toString())
+      );
+      
+      // Filter out exams the user has already participated in
+      filteredExams = exams.filter(
+        (exam) => !participatedExamIds.has(exam._id.toString())
+      );
+
+      // Get user's registrations for these exams
+      const registrations = await LiveExamRegistration.find({
+        userId,
+        examId: { $in: filteredExams.map((e) => e._id) },
+        status: "registered",
+      })
+        .select("examId")
+        .lean();
+
+      // Create a map of examId -> registration status
+      registrations.forEach((reg) => {
+        userRegistrations.set(reg.examId.toString(), true);
+      });
+    }
+
     // Initialize categorization arrays
     const ongoing = [];
     const upcoming = [];
 
     // Transform and categorize exams
-    const transformedExams = exams.map((exam) => {
+    const transformedExams = filteredExams.map((exam) => {
       const start = new Date(exam.startTime);
       const isOngoing = start <= currentTime;
 
@@ -42,6 +81,9 @@ const fetchActiveLiveExams = async (req, res) => {
         ...exam,
         id: exam._id.toString(),
         subjects: fullSubjects,
+        isRegistered: req.user && req.user.userId 
+          ? userRegistrations.has(exam._id.toString()) 
+          : false,
       };
 
       // Categorize exam
@@ -58,7 +100,7 @@ const fetchActiveLiveExams = async (req, res) => {
       success: true,
       message: "Live exams fetched successfully",
       data: {
-        total: exams.length,
+        total: filteredExams.length,
         ongoing: ongoing.length,
         upcoming: upcoming.length,
         exams: transformedExams,
@@ -78,6 +120,7 @@ const fetchActiveLiveExams = async (req, res) => {
 };
 
 // Fetch only ongoing exams (started but not ended)
+// Filters out exams that the user has already participated in (if authenticated)
 const fetchOngoingLiveExams = async (req, res) => {
   try {
     const currentTime = new Date();
@@ -93,8 +136,43 @@ const fetchOngoingLiveExams = async (req, res) => {
       .sort({ endTime: 1 }) // Sort by end time (ending soonest first)
       .lean();
 
+    // If user is authenticated, filter out exams they've already participated in
+    let filteredExams = ongoingExams;
+    let userRegistrations = new Map();
+    
+    if (req.user && req.user.userId) {
+      const userId = req.user.userId;
+      
+      // Get all exam IDs that the user has already submitted
+      const userSubmissions = await LiveExamSubmission.find({ userId })
+        .select("examId")
+        .lean();
+      
+      const participatedExamIds = new Set(
+        userSubmissions.map((submission) => submission.examId.toString())
+      );
+      
+      // Filter out exams the user has already participated in
+      filteredExams = ongoingExams.filter(
+        (exam) => !participatedExamIds.has(exam._id.toString())
+      );
+
+      // Get user's registrations for these exams
+      const registrations = await LiveExamRegistration.find({
+        userId,
+        examId: { $in: filteredExams.map((e) => e._id) },
+        status: "registered",
+      })
+        .select("examId")
+        .lean();
+
+      registrations.forEach((reg) => {
+        userRegistrations.set(reg.examId.toString(), true);
+      });
+    }
+
     // Transform data
-    const transformedExams = ongoingExams.map((exam) => ({
+    const transformedExams = filteredExams.map((exam) => ({
       ...exam,
       id: exam._id,
       subjects: exam.subjects.map((subject) => ({
@@ -104,14 +182,17 @@ const fetchOngoingLiveExams = async (req, res) => {
           : subject.questionCount,
         _id: subject._id,
       })),
+      isRegistered: req.user && req.user.userId 
+        ? userRegistrations.has(exam._id.toString()) 
+        : false,
     }));
 
     res.status(200).json({
       success: true,
       message: "Ongoing live exams fetched successfully",
       data: {
-        total: ongoingExams.length,
-        ongoing: ongoingExams.length,
+        total: filteredExams.length,
+        ongoing: filteredExams.length,
         upcoming: 0,
         exams: transformedExams,
       },
@@ -130,6 +211,7 @@ const fetchOngoingLiveExams = async (req, res) => {
 };
 
 // Fetch upcoming exams (not started yet)
+// Filters out exams that the user has already participated in (if authenticated)
 const fetchUpcomingLiveExams = async (req, res) => {
   try {
     const currentTime = new Date();
@@ -144,8 +226,43 @@ const fetchUpcomingLiveExams = async (req, res) => {
       .sort({ startTime: 1 }) // Sort by start time (earliest first)
       .lean();
 
+    // If user is authenticated, filter out exams they've already participated in
+    let filteredExams = upcomingExams;
+    let userRegistrations = new Map();
+    
+    if (req.user && req.user.userId) {
+      const userId = req.user.userId;
+      
+      // Get all exam IDs that the user has already submitted
+      const userSubmissions = await LiveExamSubmission.find({ userId })
+        .select("examId")
+        .lean();
+      
+      const participatedExamIds = new Set(
+        userSubmissions.map((submission) => submission.examId.toString())
+      );
+      
+      // Filter out exams the user has already participated in
+      filteredExams = upcomingExams.filter(
+        (exam) => !participatedExamIds.has(exam._id.toString())
+      );
+
+      // Get user's registrations for these exams
+      const registrations = await LiveExamRegistration.find({
+        userId,
+        examId: { $in: filteredExams.map((e) => e._id) },
+        status: "registered",
+      })
+        .select("examId")
+        .lean();
+
+      registrations.forEach((reg) => {
+        userRegistrations.set(reg.examId.toString(), true);
+      });
+    }
+
     // Transform data
-    const transformedExams = upcomingExams.map((exam) => ({
+    const transformedExams = filteredExams.map((exam) => ({
       ...exam,
       id: exam._id,
       subjects: exam.subjects.map((subject) => ({
@@ -155,15 +272,18 @@ const fetchUpcomingLiveExams = async (req, res) => {
           : subject.questionCount,
         _id: subject._id,
       })),
+      isRegistered: req.user && req.user.userId 
+        ? userRegistrations.has(exam._id.toString()) 
+        : false,
     }));
 
     res.status(200).json({
       success: true,
       message: "Upcoming live exams fetched successfully",
       data: {
-        total: upcomingExams.length,
+        total: filteredExams.length,
         ongoing: 0,
-        upcoming: upcomingExams.length,
+        upcoming: filteredExams.length,
         exams: transformedExams,
       },
     });
@@ -238,6 +358,18 @@ const fetchLiveExams = async (req, res) => {
       ];
     }
 
+    // Get user's participated exam IDs if authenticated (fetch once, reuse)
+    let participatedExamIds = new Set();
+    if (req.user && req.user.userId) {
+      const userId = req.user.userId;
+      const userSubmissions = await LiveExamSubmission.find({ userId })
+        .select("examId")
+        .lean();
+      participatedExamIds = new Set(
+        userSubmissions.map((submission) => submission.examId.toString())
+      );
+    }
+
     const [exams, totalCount] = await Promise.all([
       LiveExam.find(query)
         .select(
@@ -250,7 +382,12 @@ const fetchLiveExams = async (req, res) => {
       LiveExam.countDocuments(query),
     ]);
 
-    // Get counts for all categories
+    // Filter out exams the user has already participated in
+    const filteredExams = exams.filter(
+      (exam) => !participatedExamIds.has(exam._id.toString())
+    );
+
+    // Get counts for all categories (after filtering)
     const [allActiveExams] = await Promise.all([
       LiveExam.find({
         endTime: { $gt: currentTime },
@@ -258,16 +395,21 @@ const fetchLiveExams = async (req, res) => {
       }).lean(),
     ]);
 
-    const ongoing = allActiveExams.filter(
+    // Filter allActiveExams for counts
+    const filteredAllActiveExams = allActiveExams.filter(
+      (exam) => !participatedExamIds.has(exam._id.toString())
+    );
+
+    const ongoing = filteredAllActiveExams.filter(
       (exam) => new Date(exam.startTime) <= currentTime
     ).length;
 
-    const upcoming = allActiveExams.filter(
+    const upcoming = filteredAllActiveExams.filter(
       (exam) => new Date(exam.startTime) > currentTime
     ).length;
 
     // Transform data to match mock structure
-    const transformedExams = exams.map((exam) => ({
+    const transformedExams = filteredExams.map((exam) => ({
       ...exam,
       id: exam._id,
       subjects: exam.subjects.map((subject) => ({
@@ -285,16 +427,16 @@ const fetchLiveExams = async (req, res) => {
       success: true,
       message: "Live exams fetched successfully",
       data: {
-        total: allActiveExams.length,
+        total: filteredAllActiveExams.length,
         ongoing: ongoing,
         upcoming: upcoming,
         exams: transformedExams,
       },
       pagination: {
         currentPage: parseInt(page),
-        totalPages: Math.ceil(totalCount / parseInt(limit)),
-        totalCount,
-        hasNext: page * limit < totalCount,
+        totalPages: Math.ceil(filteredExams.length / parseInt(limit)),
+        totalCount: filteredExams.length,
+        hasNext: page * limit < filteredExams.length,
         hasPrev: page > 1,
         limit: parseInt(limit),
       },
