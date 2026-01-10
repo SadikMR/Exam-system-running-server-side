@@ -27,8 +27,8 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "http://localhost:5173", // local dev frontend
-      "https://exam-desk-three.vercel.app", // live frontend
+      "http://localhost:5173", // local dev
+      "https://exam-desk-bd.vercel.app", // current live frontend
     ],
     credentials: true,
   })
