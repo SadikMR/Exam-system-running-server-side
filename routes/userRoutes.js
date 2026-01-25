@@ -7,6 +7,7 @@ const authMiddleware = require("../middleware/userAuthMiddleware");
 router.post("/register", userController.registerUser);
 router.post("/login", userController.loginUser);
 router.post("/request-password-reset", userController.requestPasswordReset);
+router.post("/verify-reset-code", userController.verifyResetCode);
 router.post("/reset-password", userController.resetPassword);
 
 // Public user profile route (for viewing other users)
