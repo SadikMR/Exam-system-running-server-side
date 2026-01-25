@@ -6,6 +6,8 @@ const authMiddleware = require("../middleware/userAuthMiddleware");
 // Public routes
 router.post("/register", userController.registerUser);
 router.post("/login", userController.loginUser);
+router.post("/verify-email", userController.verifyEmail);
+router.post("/resend-verification-code", userController.resendVerificationCode);
 router.post("/request-password-reset", userController.requestPasswordReset);
 router.post("/verify-reset-code", userController.verifyResetCode);
 router.post("/reset-password", userController.resetPassword);

@@ -54,6 +54,11 @@ const UserSchema = new mongoose.Schema(
     resetPasswordCode: { type: String },
     resetPasswordCodeExpires: { type: Date },
 
+    // Email verification fields
+    emailVerificationCode: { type: String },
+    emailVerificationCodeExpires: { type: Date },
+    isEmailVerified: { type: Boolean, default: false },
+
     // Verification fields
     isVerified: {
       type: Boolean,

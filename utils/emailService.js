@@ -104,4 +104,50 @@ const sendPasswordResetCode = async (to, code, username) => {
   await transporter.sendMail(mailOptions);
 };
 
-module.exports = { sendInvitationEmail, sendPasswordResetCode };
+const sendEmailVerificationCode = async (to, code, username) => {
+  const mailOptions = {
+    from: `Online Exam System <${process.env.EMAIL_USER}>`,
+    to,
+    subject: "Verify Your Email Address",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Online Exam System!</h1>
+        </div>
+        
+        <div style="background-color: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
+            Hello <strong>${username}</strong>,
+          </p>
+          
+          <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
+            Thank you for registering! Please verify your email address using the code below:
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="background-color: #f3f4f6; border: 2px dashed #667eea; border-radius: 8px; padding: 20px; display: inline-block;">
+              <p style="font-size: 32px; font-weight: bold; color: #667eea; margin: 0; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+                ${code}
+              </p>
+            </div>
+          </div>
+          
+          <p style="font-size: 14px; color: #6b7280; margin-top: 30px; margin-bottom: 10px;">
+            This code will expire in <strong>10 minutes</strong>.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+          
+          <p style="font-size: 12px; color: #9ca3af; text-align: center; margin: 0;">
+            If you did not create an account, please ignore this email.<br>
+            Your email address will not be registered.
+          </p>
+        </div>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+module.exports = { sendInvitationEmail, sendPasswordResetCode, sendEmailVerificationCode };

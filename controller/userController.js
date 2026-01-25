@@ -2,7 +2,7 @@ const User = require("../models/User/users");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const { sendPasswordResetCode } = require("../utils/emailService");
+const { sendPasswordResetCode, sendEmailVerificationCode } = require("../utils/emailService");
 
 // Registration
 const registerUser = async (req, res) => {
@@ -40,17 +40,24 @@ const registerUser = async (req, res) => {
       image,
       collegeOrUniversity,
       password, // hashed by schema pre-save
+      isEmailVerified: false,
     });
+
+    // Generate 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedCode = await bcrypt.hash(verificationCode, 10);
+
+    newUser.emailVerificationCode = hashedCode;
+    newUser.emailVerificationCodeExpires = Date.now() + 600000; // 10 minutes
 
     await newUser.save();
 
+    // Send verification email
+    await sendEmailVerificationCode(newUser.email, verificationCode, newUser.username);
+
     res.status(201).json({
-      message: "User registration successful.",
-      user: {
-        id: newUser._id,
-        username: newUser.username,
-        email: newUser.email,
-      },
+      message: "Registration successful. Please check your email to verify your account.",
+      email: newUser.email,
     });
   } catch (error) {
     console.error("User registration error:", error);
@@ -75,6 +82,15 @@ const loginUser = async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch)
       return res.status(401).json({ message: "Invalid credentials." });
+
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      return res.status(403).json({ 
+        message: "Please verify your email before logging in.",
+        email: user.email,
+        requiresVerification: true
+      });
+    }
 
     const token = jwt.sign(
       { userId: user._id, username: user.username },
@@ -227,6 +243,75 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Verify email with code
+const verifyEmail = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) {
+      return res.status(400).json({ message: "Email and code are required." });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({ message: "Email already verified." });
+    }
+
+    if (
+      !user.emailVerificationCode ||
+      !user.emailVerificationCodeExpires ||
+      user.emailVerificationCodeExpires < Date.now()
+    ) {
+      return res.status(400).json({ message: "Invalid or expired verification code." });
+    }
+
+    const isValid = await bcrypt.compare(code, user.emailVerificationCode);
+    if (!isValid) return res.status(400).json({ message: "Invalid verification code." });
+
+    user.isEmailVerified = true;
+    user.emailVerificationCode = undefined;
+    user.emailVerificationCodeExpires = undefined;
+
+    await user.save();
+
+    res.status(200).json({ message: "Email verified successfully. You can now login." });
+  } catch (error) {
+    console.error("Verify email error:", error);
+    res.status(500).json({ message: "Server error during email verification." });
+  }
+};
+
+// Resend verification code
+const resendVerificationCode = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required." });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({ message: "Email already verified." });
+    }
+
+    // Generate new 6-digit code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedCode = await bcrypt.hash(verificationCode, 10);
+
+    user.emailVerificationCode = hashedCode;
+    user.emailVerificationCodeExpires = Date.now() + 600000; // 10 minutes
+    await user.save();
+
+    await sendEmailVerificationCode(user.email, verificationCode, user.username);
+
+    res.status(200).json({ message: "Verification code sent to your email." });
+  } catch (error) {
+    console.error("Resend verification code error:", error);
+    res.status(500).json({ message: "Server error sending verification code." });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -235,4 +320,6 @@ module.exports = {
   requestPasswordReset,
   verifyResetCode,
   resetPassword,
+  verifyEmail,
+  resendVerificationCode,
 };
