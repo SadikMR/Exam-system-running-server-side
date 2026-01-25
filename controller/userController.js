@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendPasswordResetCode, sendEmailVerificationCode } = require("../utils/emailService");
+const cloudinary = require("../config/cloudinary");
 
 // Registration
 const registerUser = async (req, res) => {
@@ -31,13 +32,31 @@ const registerUser = async (req, res) => {
         .json({ message: "Username or email already registered." });
     }
 
+    let imageUrl = null;
+
+    // Upload image to Cloudinary if provided
+    if (image) {
+      try {
+        const uploadResult = await cloudinary.uploader.upload(image, {
+          folder: "profile-images",
+          transformation: [{ width: 500, height: 500, crop: "limit" }],
+          allowed_formats: ["jpg", "jpeg", "png", "webp"],
+        });
+        imageUrl = uploadResult.secure_url;
+      } catch (uploadError) {
+        console.error("Image upload error:", uploadError);
+        // Continue registration even if image upload fails
+        // User can update their profile image later
+      }
+    }
+
     const newUser = new User({
       username,
       name,
       email,
       phone,
       address,
-      image,
+      image: imageUrl, // Store Cloudinary URL instead of base64
       collegeOrUniversity,
       password, // hashed by schema pre-save
       isEmailVerified: false,
