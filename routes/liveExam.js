@@ -22,6 +22,20 @@ const {
   getUserRegistrations,
 } = require("../controller/liveExamController/liveExamRegistration.controller");
 
+const {
+  getCurrentDemoExam,
+  getNextDemoExam,
+  getDemoExamSchedulerStatus,
+  createDemoExamManually,
+} = require("../controller/demoExamController");
+
+const {
+  getCurrentPracticeExam,
+  registerForPracticeExam,
+  checkPracticeRegistration,
+  getPracticeExamSchedulerStatus,
+} = require("../controller/practiceExamController");
+
 const optionalAuth = require("../middleware/optionalAuth");
 const authMiddleware = require("../middleware/userAuthMiddleware");
 
@@ -29,6 +43,18 @@ const router = express.Router();
 
 // POST routes
 router.post("/create", createLiveExam);
+
+// Demo exam routes
+router.get("/demo/current", optionalAuth, getCurrentDemoExam);
+router.get("/demo/next", getNextDemoExam);
+router.get("/demo/status", getDemoExamSchedulerStatus);
+router.post("/demo/create", authMiddleware, createDemoExamManually); // Admin only
+
+// Practice exam routes
+router.get("/practice/current", optionalAuth, getCurrentPracticeExam);
+router.post("/practice/register", authMiddleware, registerForPracticeExam);
+router.get("/practice/registration/:examId", authMiddleware, checkPracticeRegistration);
+router.get("/practice/status", getPracticeExamSchedulerStatus);
 
 // Submit submission
 router.post("/submit", submitExam);

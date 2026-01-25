@@ -138,6 +138,22 @@ const liveExamSchema = new mongoose.Schema(
       enum: ["model-test", "subject-wise"],
       default: [],
     },
+    isDemo: {
+      type: Boolean,
+      default: false,
+    },
+    demoInstanceId: {
+      type: String,
+      default: null,
+    },
+    isPractice: {
+      type: Boolean,
+      default: false,
+    },
+    practiceInstanceId: {
+      type: String,
+      default: null,
+    },
     passingScore: {
       type: Number,
       default: 40, // Changed from 0 to 40

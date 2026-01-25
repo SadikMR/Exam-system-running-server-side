@@ -14,7 +14,7 @@ const fetchActiveLiveExams = async (req, res) => {
       endTime: { $gt: currentTime },
     })
       .select(
-        "title code examType examMode duration startTime endTime password isPremium subjects status totalQuestions tags passingScore createdAt updatedAt"
+        "title code examType examMode duration startTime endTime password isPremium subjects status totalQuestions tags passingScore isDemo isPractice createdAt updatedAt"
       )
       .sort({ startTime: 1 })
       .lean();
@@ -35,9 +35,9 @@ const fetchActiveLiveExams = async (req, res) => {
         userSubmissions.map((submission) => submission.examId.toString())
       );
       
-      // Filter out exams the user has already participated in
+      // Filter out exams the user has already participated in (except demo exams)
       filteredExams = exams.filter(
-        (exam) => !participatedExamIds.has(exam._id.toString())
+        (exam) => exam.isDemo || !participatedExamIds.has(exam._id.toString())
       );
 
       // Get user's registrations for these exams
@@ -131,7 +131,7 @@ const fetchOngoingLiveExams = async (req, res) => {
       status: "published",
     })
       .select(
-        "title code examType examMode duration startTime endTime password isPremium subjects status totalQuestions tags passingScore"
+        "title code examType examMode duration startTime endTime password isPremium subjects status totalQuestions tags passingScore isDemo isPractice"
       )
       .sort({ endTime: 1 }) // Sort by end time (ending soonest first)
       .lean();
@@ -152,9 +152,9 @@ const fetchOngoingLiveExams = async (req, res) => {
         userSubmissions.map((submission) => submission.examId.toString())
       );
       
-      // Filter out exams the user has already participated in
+      // Filter out exams the user has already participated in (except demo exams)
       filteredExams = ongoingExams.filter(
-        (exam) => !participatedExamIds.has(exam._id.toString())
+        (exam) => exam.isDemo || !participatedExamIds.has(exam._id.toString())
       );
 
       // Get user's registrations for these exams
@@ -242,9 +242,9 @@ const fetchUpcomingLiveExams = async (req, res) => {
         userSubmissions.map((submission) => submission.examId.toString())
       );
       
-      // Filter out exams the user has already participated in
+      // Filter out exams the user has already participated in (except demo exams)
       filteredExams = upcomingExams.filter(
-        (exam) => !participatedExamIds.has(exam._id.toString())
+        (exam) => exam.isDemo || !participatedExamIds.has(exam._id.toString())
       );
 
       // Get user's registrations for these exams
@@ -373,7 +373,7 @@ const fetchLiveExams = async (req, res) => {
     const [exams, totalCount] = await Promise.all([
       LiveExam.find(query)
         .select(
-          "title code examType examMode duration startTime endTime password isPremium subjects status totalQuestions tags passingScore createdAt updatedAt"
+          "title code examType examMode duration startTime endTime password isPremium subjects status totalQuestions tags passingScore isDemo isPractice createdAt updatedAt"
         )
         .sort({ startTime: 1 })
         .skip(skip)
@@ -382,9 +382,9 @@ const fetchLiveExams = async (req, res) => {
       LiveExam.countDocuments(query),
     ]);
 
-    // Filter out exams the user has already participated in
+    // Filter out exams the user has already participated in (except demo exams)
     const filteredExams = exams.filter(
-      (exam) => !participatedExamIds.has(exam._id.toString())
+      (exam) => exam.isDemo || !participatedExamIds.has(exam._id.toString())
     );
 
     // Get counts for all categories (after filtering)
@@ -462,7 +462,7 @@ const fetchLiveExamById = async (req, res) => {
 
     const exam = await LiveExam.findById(examId)
       .select(
-        "title code examType examMode duration startTime endTime password isPremium subjects status totalQuestions tags passingScore createdAt updatedAt"
+        "title code examType examMode duration startTime endTime password isPremium subjects status totalQuestions tags passingScore isDemo isPractice createdAt updatedAt"
       )
       .lean();
 

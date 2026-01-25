@@ -120,7 +120,7 @@ const LiveExamSubmissionSchema = new mongoose.Schema(
     // Completion metadata
     completionReason: {
       type: String,
-      enum: ["manual", "timeout", "expelled", "system"],
+      enum: ["manual", "time_up", "timeout", "expelled", "system"],
       default: "manual",
     },
 

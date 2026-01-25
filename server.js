@@ -16,6 +16,8 @@ const practiceExamSubmissionRoutes = require("./routes/practiceExamSubmission.ro
 const connectDB = require("./config/db.js");
 
 const { sendInvitationEmail } = require("./utils/emailService.js");
+const demoExamScheduler = require("./services/demoExamScheduler");
+const practiceExamScheduler = require("./services/practiceExamScheduler");
 
 // Load environment variables from .env file
 dotenv.config();
@@ -108,6 +110,55 @@ app.get("/test-email", async (req, res) => {
 if (process.env.VERCEL !== "1") {
   // Connect to MongoDB for local development
   connectDB();
+
+  // Create permanent demo exam (if it doesn't exist)
+  const createPermanentDemoExam = async () => {
+    const LiveExam = require("./models/liveExam");
+    const demoExamQuestions = require("./data/demoExamQuestions");
+    
+    try {
+      // Delete ALL existing demo exams (old scheduler-created ones)
+      const deleteResult = await LiveExam.deleteMany({ isDemo: true });
+      if (deleteResult.deletedCount > 0) {
+        console.log(`🗑️  Deleted ${deleteResult.deletedCount} old demo exam(s)`);
+      }
+      
+      console.log("🎯 Creating permanent demo exam...");
+      
+      // Create demo exam that's always available (far future end time)
+      const farFuture = new Date();
+      farFuture.setFullYear(farFuture.getFullYear() + 10); // 10 years from now
+      
+      const demoExam = new LiveExam({
+        title: demoExamQuestions.title,
+        examType: demoExamQuestions.examType,
+        examMode: "live",
+        duration: demoExamQuestions.duration,
+        startTime: new Date(), // Always started
+        endTime: farFuture, // Never ends
+        password: null,
+        isPremium: false,
+        subjects: demoExamQuestions.subjects,
+        status: "published",
+        totalQuestions: demoExamQuestions.totalQuestions,
+        tags: ["model-test"],
+        passingScore: demoExamQuestions.passingScore,
+        isDemo: true,
+        demoInstanceId: "permanent-demo",
+      });
+      
+      await demoExam.save();
+      console.log("✅ Permanent demo exam created! Always available for users.");
+      console.log(`   End Time: ${farFuture.toISOString()} (10 years from now)`);
+    } catch (error) {
+      console.error("❌ Error creating permanent demo exam:", error);
+    }
+  };
+  
+  createPermanentDemoExam();
+
+  // Start practice exam scheduler
+  practiceExamScheduler.start();
 
   const PORT = process.env.SERVER_PORT || 5000;
   app.listen(PORT, () => {
