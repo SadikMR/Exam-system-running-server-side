@@ -3,7 +3,6 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendPasswordResetCode, sendEmailVerificationCode } = require("../utils/emailService");
-const cloudinary = require("../config/cloudinary");
 
 // Registration
 const registerUser = async (req, res) => {
@@ -14,7 +13,6 @@ const registerUser = async (req, res) => {
       email,
       phone,
       address,
-      image,
       collegeOrUniversity,
       password,
     } = req.body;
@@ -32,23 +30,9 @@ const registerUser = async (req, res) => {
         .json({ message: "Username or email already registered." });
     }
 
-    let imageUrl = null;
-
-    // Upload image to Cloudinary if provided
-    if (image) {
-      try {
-        const uploadResult = await cloudinary.uploader.upload(image, {
-          folder: "profile-images",
-          transformation: [{ width: 500, height: 500, crop: "limit" }],
-          allowed_formats: ["jpg", "jpeg", "png", "webp"],
-        });
-        imageUrl = uploadResult.secure_url;
-      } catch (uploadError) {
-        console.error("Image upload error:", uploadError);
-        // Continue registration even if image upload fails
-        // User can update their profile image later
-      }
-    }
+    // Get image URL from multer/cloudinary upload
+    // If file was uploaded, req.file.path contains the Cloudinary URL
+    const imageUrl = req.file ? req.file.path : null;
 
     const newUser = new User({
       username,
@@ -56,7 +40,7 @@ const registerUser = async (req, res) => {
       email,
       phone,
       address,
-      image: imageUrl, // Store Cloudinary URL instead of base64
+      image: imageUrl, // Store Cloudinary URL from multer
       collegeOrUniversity,
       password, // hashed by schema pre-save
       isEmailVerified: false,
