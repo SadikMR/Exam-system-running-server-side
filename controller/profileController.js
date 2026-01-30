@@ -93,18 +93,17 @@ const submitVerification = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    // Validate that all 4 images are uploaded
+    // Validate that all 3 images are uploaded
     if (
       !req.files ||
       !req.files.front ||
       !req.files.left ||
-      !req.files.right ||
-      !req.files.up
+      !req.files.right
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "All four verification images are required (front, left, right, up)",
+          "All three verification images are required (front, left, right)",
       });
     }
 
@@ -117,7 +116,6 @@ const submitVerification = async (req, res) => {
         cloudinary.uploader.destroy(req.files.front[0].filename),
         cloudinary.uploader.destroy(req.files.left[0].filename),
         cloudinary.uploader.destroy(req.files.right[0].filename),
-        cloudinary.uploader.destroy(req.files.up[0].filename),
       ];
       await Promise.all(deletePromises).catch((err) =>
         console.error("Error deleting images:", err)
@@ -163,7 +161,6 @@ const submitVerification = async (req, res) => {
       front: req.files.front[0].path,
       left: req.files.left[0].path,
       right: req.files.right[0].path,
-      up: req.files.up[0].path,
     };
 
     // Automatically verify the user

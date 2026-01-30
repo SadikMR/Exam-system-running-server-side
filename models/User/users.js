@@ -92,10 +92,6 @@ const UserSchema = new mongoose.Schema(
         type: String,
         default: null,
       },
-      up: {
-        type: String,
-        default: null,
-      },
     },
 
     // Enrollment/Registration info
