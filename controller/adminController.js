@@ -39,9 +39,22 @@ exports.sendInvitation = async (req, res) => {
     if (!email || !role)
       return res.status(400).json({ message: "Email and role required" });
 
-    const existingInvite = await Invitation.findOne({ email, accepted: false });
+    // Delete any expired invitations for this email first
+    await Invitation.deleteMany({
+      email,
+      accepted: false,
+      expiresAt: { $lt: new Date() }
+    });
+
+    // Now check for existing valid (non-expired) invitations
+    const existingInvite = await Invitation.findOne({ 
+      email, 
+      accepted: false,
+      expiresAt: { $gt: new Date() }
+    });
+    
     if (existingInvite)
-      return res.status(400).json({ message: "Invitation already sent" });
+      return res.status(400).json({ message: "Invitation already sent and still valid" });
 
     const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
