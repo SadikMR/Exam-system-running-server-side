@@ -150,4 +150,65 @@ const sendEmailVerificationCode = async (to, code, username) => {
   await transporter.sendMail(mailOptions);
 };
 
-module.exports = { sendInvitationEmail, sendPasswordResetCode, sendEmailVerificationCode };
+const sendExamReminderEmail = async (to, username, examTitle, startTime) => {
+  const formattedTime = new Date(startTime).toLocaleString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+
+  const mailOptions = {
+    from: `ExamDesk <${process.env.EMAIL_USER}>`,
+    to,
+    subject: `⏰ Reminder: "${examTitle}" starts in 1 hour!`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f0fdf4;">
+        <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">⏰ Exam Reminder</h1>
+          <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0 0; font-size: 14px;">ExamDesk</p>
+        </div>
+
+        <div style="background-color: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
+            Hello <strong>${username}</strong>,
+          </p>
+
+          <p style="font-size: 16px; color: #374151; margin-bottom: 10px;">
+            Your upcoming exam starts in <strong style="color: #059669;">1 hour!</strong>
+          </p>
+
+          <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; border-radius: 6px; padding: 20px; margin: 24px 0;">
+            <p style="font-size: 18px; font-weight: bold; color: #065f46; margin: 0 0 8px 0;">${examTitle}</p>
+            <p style="font-size: 14px; color: #374151; margin: 0;">🗓️ <strong>Starts at:</strong> ${formattedTime}</p>
+          </div>
+
+          <p style="font-size: 14px; color: #6b7280; margin-bottom: 24px;">
+            Make sure you are verified and registered before the exam begins!
+          </p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/exams"
+               style="background-color: #10b981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
+              Go to Exams
+            </a>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+          <p style="font-size: 12px; color: #9ca3af; text-align: center; margin: 0;">
+            You set this reminder from ExamDesk.<br>
+            If you no longer want reminders, you can remove them from the exam list.
+          </p>
+        </div>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+module.exports = { sendInvitationEmail, sendPasswordResetCode, sendEmailVerificationCode, sendExamReminderEmail };

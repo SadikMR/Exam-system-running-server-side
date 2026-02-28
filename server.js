@@ -160,6 +160,10 @@ if (process.env.VERCEL !== "1") {
   // Start practice exam scheduler
   practiceExamScheduler.start();
 
+  // Start reminder email scheduler
+  const { startReminderScheduler } = require("./services/reminderScheduler");
+  startReminderScheduler();
+
   const PORT = process.env.SERVER_PORT || 5000;
   app.listen(PORT, () => {
     console.log("Render MongoDB URI:", process.env.MONGODB_URI);

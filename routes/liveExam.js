@@ -39,6 +39,12 @@ const {
 const optionalAuth = require("../middleware/optionalAuth");
 const authMiddleware = require("../middleware/userAuthMiddleware");
 
+const {
+  setReminder,
+  removeReminder,
+  getUserReminders,
+} = require("../controller/liveExamController/reminderController");
+
 const router = express.Router();
 
 // POST routes
@@ -131,6 +137,11 @@ router.get("/mock", optionalAuth, async (req, res) => {
 router.post("/register", authMiddleware, registerForExam);
 router.get("/registration/:examId", authMiddleware, checkRegistration);
 router.get("/registration/user/:userId", authMiddleware, getUserRegistrations);
+
+// Reminder routes (require authentication)
+router.post("/reminder", authMiddleware, setReminder);
+router.delete("/reminder/:examId", authMiddleware, removeReminder);
+router.get("/reminders", authMiddleware, getUserReminders);
 
 // Use optional auth middleware - works for both authenticated and unauthenticated users
 // If user is authenticated, filters out exams they've already participated in
