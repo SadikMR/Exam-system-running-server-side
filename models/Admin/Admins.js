@@ -19,6 +19,8 @@ const AdminSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: false },
     invitationToken: { type: String },
     invitationExpiresAt: { type: Date },
+    passwordResetCode: { type: String },
+    passwordResetExpires: { type: Date },
   },
   { timestamps: true }
 );

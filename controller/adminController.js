@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/Admin/Admins");
 const Invitation = require("../models/Admin/Invitation");
-const { sendInvitationEmail } = require("../utils/emailService");
+const { sendInvitationEmail, sendPasswordResetCode } = require("../utils/emailService");
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
@@ -146,7 +146,6 @@ exports.loginAdmin = async (req, res) => {
 
 exports.getUsersByRole = async (req, res) => {
   try {
-    // Fetch admins and editors in parallel (much faster)
     const [admins, editors] = await Promise.all([
       Admin.find(
         { role: "admin" },
@@ -163,5 +162,73 @@ exports.getUsersByRole = async (req, res) => {
   } catch (error) {
     console.error("Error fetching users by role:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ── Forgot Password: send OTP to admin email ─────────────────────────────────
+exports.forgotAdminPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    const admin = await Admin.findOne({ email });
+    // Always respond with success to avoid email enumeration
+    if (!admin || !admin.isActive) {
+      return res.json({ success: true, message: "If that email exists, a reset code has been sent." });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit
+    admin.passwordResetCode = code;
+    admin.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    await admin.save();
+
+    await sendPasswordResetCode(email, code, admin.name);
+    res.json({ success: true, message: "Reset code sent to your email." });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ── Verify OTP code ───────────────────────────────────────────────────────────
+exports.verifyAdminResetCode = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) return res.status(400).json({ message: "Email and code are required" });
+
+    const admin = await Admin.findOne({ email });
+    if (!admin || admin.passwordResetCode !== code || !admin.passwordResetExpires || admin.passwordResetExpires < new Date()) {
+      return res.status(400).json({ success: false, message: "Invalid or expired code" });
+    }
+
+    res.json({ success: true, message: "Code verified" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ── Reset password with verified OTP ─────────────────────────────────────────
+exports.resetAdminPassword = async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const admin = await Admin.findOne({ email });
+    if (!admin || admin.passwordResetCode !== code || !admin.passwordResetExpires || admin.passwordResetExpires < new Date()) {
+      return res.status(400).json({ success: false, message: "Invalid or expired code. Please request a new one." });
+    }
+
+    admin.password = newPassword; // pre-save hook will bcrypt it
+    admin.passwordResetCode = undefined;
+    admin.passwordResetExpires = undefined;
+    await admin.save();
+
+    res.json({ success: true, message: "Password reset successfully. You can now log in." });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

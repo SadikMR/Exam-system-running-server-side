@@ -9,4 +9,9 @@ router.post("/register", adminController.registerAdmin);
 router.post("/login", adminController.loginAdmin);
 router.get("/users/roles", adminController.getUsersByRole);
 
+// Forgot / reset password (OTP via email)
+router.post("/forgot-password",    adminController.forgotAdminPassword);
+router.post("/verify-reset-code",  adminController.verifyAdminResetCode);
+router.post("/reset-password",     adminController.resetAdminPassword);
+
 module.exports = router;
