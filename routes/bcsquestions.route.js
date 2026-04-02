@@ -19,6 +19,5 @@ router.get(
   "/subject/:subjectName/:limit?",
   bcsCtrl.getRandomBCSQuestionsBySubject
 );
-console.log("bcscCtrl keys:", Object.keys(bcsCtrl));
 
 module.exports = router;
