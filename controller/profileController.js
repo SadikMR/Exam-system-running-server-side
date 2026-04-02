@@ -171,7 +171,6 @@ const submitVerification = async (req, res) => {
 
     await user.save();
 
-    console.log("Verification saved successfully for user:", userId);
 
     res.status(200).json({
       success: true,
