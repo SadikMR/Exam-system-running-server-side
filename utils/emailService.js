@@ -12,18 +12,18 @@ const transporter = nodemailer.createTransport({
 });
 const sendInvitationEmail = async (to, invitationLink, role = "admin") => {
   const mailOptions = {
-    from: `Online Exam System <${process.env.EMAIL_USER}>`,
+    from: '"Exam Desk" <no-reply@examdesk.com>',
     to,
-    subject: "Invitation to Join Online Exam System",
+    subject: "Invitation to Join Exam Desk",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Online Exam System</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Exam Desk</h1>
         </div>
         
         <div style="background-color: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
-            You have been invited to join the <strong>Online Exam System</strong> as an <strong style="color: #667eea; text-transform: capitalize;">${role}</strong>.
+            You have been invited to join the <strong>Exam Desk</strong> as an <strong style="color: #667eea; text-transform: capitalize;">${role}</strong>.
           </p>
           
           <p style="font-size: 16px; color: #374151; margin-bottom: 30px;">
@@ -60,7 +60,7 @@ const sendInvitationEmail = async (to, invitationLink, role = "admin") => {
 
 const sendPasswordResetCode = async (to, code, username) => {
   const mailOptions = {
-    from: `Online Exam System <${process.env.EMAIL_USER}>`,
+    from: `Exam Desk <${process.env.EMAIL_USER}>`,
     to,
     subject: "Password Reset Verification Code",
     html: `
@@ -106,13 +106,13 @@ const sendPasswordResetCode = async (to, code, username) => {
 
 const sendEmailVerificationCode = async (to, code, username) => {
   const mailOptions = {
-    from: `Online Exam System <${process.env.EMAIL_USER}>`,
+    from: `Exam Desk <${process.env.EMAIL_USER}>`,
     to,
     subject: "Verify Your Email Address",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Online Exam System!</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Exam Desk!</h1>
         </div>
         
         <div style="background-color: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
